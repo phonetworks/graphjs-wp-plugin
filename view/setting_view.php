@@ -1,5 +1,5 @@
 <div class="wrap">
-    <h1>GraphJS Settings</h1>
+    <h1>GraphJS</h1>
 
     <form method="post" action="options.php">
         <?php

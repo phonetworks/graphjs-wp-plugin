@@ -120,7 +120,7 @@ class WordpressPlugin
             include $path;
         };
 
-        add_menu_page('GraphJS Settings', 'GraphJS Settings',
+        add_menu_page('GraphJS', 'GraphJS',
             'administrator', 'graphjs-settings',
             $graphjs_settings_page, 'dashicons-admin-generic');
     }
