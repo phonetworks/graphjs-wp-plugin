@@ -2,6 +2,8 @@
 
 namespace Graphjs;
 
+use Graphjs\Markup\ElementInterface;
+
 class WordpressPlugin
 {
     const GRAPHJS_UUID = 'graphjs_uuid';
@@ -12,12 +14,18 @@ class WordpressPlugin
 
     private $pluginFile;
     private $pluginDirectory;
-    private $supportedElements = [];
+    private $graphjs;
 
-    public function __construct($pluginFile, $pluginDirectory)
+    /**
+     * @param string $pluginFile
+     * @param string $pluginDirectory
+     * @param Graphjs $graphjs
+     */
+    public function __construct($pluginFile, $pluginDirectory, Graphjs $graphjs)
     {
         $this->pluginFile = $pluginFile;
         $this->pluginDirectory = $pluginDirectory;
+        $this->graphjs = $graphjs;
     }
 
     public function bootstrap()
@@ -77,13 +85,23 @@ class WordpressPlugin
 
     public function registerShortcodes()
     {
-        add_shortcode('graphjs-auth', [ $this, 'graphjsShortcodeAuth' ]);
+        $elements = $this->graphjs->getElements();
+        array_walk($elements, function (ElementInterface $element) {
+            $shortcodeRenderer = new ShortcodeRenderer($element);
+            add_shortcode($element->getName(), [ $shortcodeRenderer, 'render' ]);
+        });
     }
 
     public function registerActions()
     {
+        add_action('admin_init', function () {
+
+            $this->addActionLinks();
+            $this->registerSettings();
+        });
+
         add_action('admin_menu', function () {
-            $this->addAdminMenu();
+            $this->addAdminMenuPage();
         });
 
         add_action('wp_footer', [ $this, 'my_custom_admin_head' ]);
@@ -95,7 +113,7 @@ class WordpressPlugin
         include $path;
     }
 
-    public function addAdminMenu()
+    public function addAdminMenuPage()
     {
         $graphjs_settings_page = function () {
             $path = $this->pluginDirectory . '/view/setting_view.php';
@@ -105,59 +123,24 @@ class WordpressPlugin
         add_menu_page('GraphJS Settings', 'GraphJS Settings',
             'administrator', 'graphjs-settings',
             $graphjs_settings_page, 'dashicons-admin-generic');
-
-        add_action('admin_init', function () {
-
-            // Add setting link
-            $plugin_file = plugin_basename($this->pluginFile);
-            $fn = function ($actions) {
-                $actions['settings'] = '<a href="' . menu_page_url('graphjs-settings', false) . '"/>' . __('Settings') . '</a>';
-                return $actions;
-            };
-            add_filter("plugin_action_links_$plugin_file", $fn);
-
-            // Register allowed form fields of setting
-            register_setting('graphjs_options', self::GRAPHJS_UUID, 'strval');
-            register_setting('graphjs_options', self::GRAPHJS_THEME, 'strval');
-            register_setting('graphjs_options', self::GRAPHJS_COLOR, 'strval');
-        });
     }
 
-    function graphjsShortcodeAuth($atts = [], $content = null, $tag = '')
+    public function addActionLinks()
     {
-        // normalize attribute keys, lowercase
-        $atts = array_change_key_case((array) $atts, CASE_LOWER);
+        // Add setting link
+        $plugin_file = plugin_basename($this->pluginFile);
+        $fn = function ($actions) {
+            $actions['settings'] = '<a href="' . menu_page_url('graphjs-settings', false) . '"/>' . __('Settings') . '</a>';
+            return $actions;
+        };
+        add_filter("plugin_action_links_$plugin_file", $fn);
+    }
 
-        // override default attributes with usesr attributes
-        $graphjs_atts = shortcode_atts([
-            'type' => null,
-            'theme' => null,
-            'position' => null,
-        ], $atts, $tag);
-
-        $dom = new \DOMDocument('1.0');
-        $auth_element = $dom->createElement('graphjs-auth');
-
-        if (isset($graphjs_atts['type'])) {
-            $attr_type = $dom->createAttribute('type');
-            $attr_type->value = $graphjs_atts['type'];
-            $auth_element->appendChild($attr_type);
-        }
-
-        if (isset($graphjs_atts['theme'])) {
-            $attr_type = $dom->createAttribute('theme');
-            $attr_type->value = $graphjs_atts['theme'];
-            $auth_element->appendChild($attr_type);
-        }
-
-        if (isset($graphjs_atts['position'])) {
-            $attr_type = $dom->createAttribute('position');
-            $attr_type->value = $graphjs_atts['position'];
-            $auth_element->appendChild($attr_type);
-        }
-
-        $dom->appendChild($auth_element);
-        $output = $dom->saveHTML();
-        return $output;
+    public function registerSettings()
+    {
+        // Register allowed form fields of setting
+        register_setting('graphjs_options', self::GRAPHJS_UUID, 'strval');
+        register_setting('graphjs_options', self::GRAPHJS_THEME, 'strval');
+        register_setting('graphjs_options', self::GRAPHJS_COLOR, 'strval');
     }
 }
