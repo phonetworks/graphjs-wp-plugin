@@ -15,13 +15,33 @@ class Graphjs
 
     private function _initElements()
     {
-        $elements = [];
+        $elements = [
+            'auth',
+            'auth-state',
+            'auth-register',
+            'auth-login',
+            'auth-reset',
+            'forum',
+            'forum-list',
+            'forum-thread',
+            'forum-composer',
+            'messages',
+            'messages-composer',
+            'profile',
+            'profile-card',
+            'profile-list',
+            'group',
+            'group-card',
+            'group-list',
+            'star-button',
+            'star-list',
+            'comments',
+        ];
+        $elementPrefix = 'graphjs-';
 
-        $elements[] = new Auth();
-
-        foreach ($elements as $element) {
-            $this->elements[$element->getName()] = $element;
-        }
+        $this->elements = array_map(function ($element) use ($elementPrefix) {
+            return $elementPrefix . $element;
+        }, $elements);
     }
 
     /**

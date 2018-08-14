@@ -86,9 +86,9 @@ class WordpressPlugin
     public function registerShortcodes()
     {
         $elements = $this->graphjs->getElements();
-        array_walk($elements, function (ElementInterface $element) {
+        array_walk($elements, function ($element) {
             $shortcodeRenderer = new ShortcodeRenderer($element);
-            add_shortcode($element->getName(), [ $shortcodeRenderer, 'render' ]);
+            add_shortcode($element, [ $shortcodeRenderer, 'render' ]);
         });
     }
 

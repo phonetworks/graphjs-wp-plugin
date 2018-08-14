@@ -9,7 +9,7 @@ class ShortcodeRenderer
 {
     private $element;
 
-    public function __construct(ElementInterface $element)
+    public function __construct($element)
     {
         $this->element = $element;
     }
@@ -19,27 +19,13 @@ class ShortcodeRenderer
         // normalize attribute keys, lowercase
         $atts = array_change_key_case((array) $atts, CASE_LOWER);
 
-        $supportedAttributes = $this->element->getAttributes();
-        $shortcodeAttributes = array_fill_keys(array_keys($supportedAttributes), null);
-
-        $graphjsAtts = shortcode_atts($shortcodeAttributes, $atts, $tag);
-
         $dom = new \DOMDocument('1.0');
-        $domElement = $dom->createElement('graphjs-auth');
+        $domElement = $dom->createElement($this->element);
 
-        foreach ($supportedAttributes as $attributeName => $supportedAttribute) {
-            if (isset($graphjsAtts[$attributeName])) {
-                try {
-                    $attributeValue = $supportedAttribute->getValueProcessor()
-                        ->process($graphjsAtts[$attributeName]);
-                }
-                catch (InvalidAttributeValueException $ex) {
-                    continue;
-                }
-                $domAttribute = $dom->createAttribute($attributeName);
-                $domAttribute->value = $attributeValue;
-                $domElement->appendChild($domAttribute);
-            }
+        foreach ($atts as $attributeName => $attributeValue) {
+            $domAttribute = $dom->createAttribute($attributeName);
+            $domAttribute->value = $attributeValue;
+            $domElement->appendChild($domAttribute);
         }
 
         $dom->appendChild($domElement);
