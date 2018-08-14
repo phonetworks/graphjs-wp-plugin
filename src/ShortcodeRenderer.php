@@ -2,9 +2,6 @@
 
 namespace Graphjs;
 
-use Graphjs\Markup\ElementInterface;
-use Graphjs\Markup\InvalidAttributeValueException;
-
 class ShortcodeRenderer
 {
     private $element;

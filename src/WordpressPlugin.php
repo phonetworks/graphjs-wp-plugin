@@ -2,8 +2,6 @@
 
 namespace Graphjs;
 
-use Graphjs\Markup\ElementInterface;
-
 class WordpressPlugin
 {
     const GRAPHJS_UUID = 'graphjs_uuid';

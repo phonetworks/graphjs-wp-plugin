@@ -2,8 +2,6 @@
 
 namespace Graphjs;
 
-use Graphjs\Markup\Element\Auth;
-
 class Graphjs
 {
     private $elements = [];
