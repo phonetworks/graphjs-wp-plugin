@@ -113,14 +113,24 @@ class WordpressPlugin
 
     public function addAdminMenuPage()
     {
-        $graphjs_settings_page = function () {
-            $path = $this->pluginDirectory . '/view/setting_view.php';
+        $graphjs_main_menu_page = function () {
+            $elements = $this->graphjs->getElements();
+            $path = $this->pluginDirectory . '/view/graphjs.php';
             include $path;
         };
 
         add_menu_page('GraphJS', 'GraphJS',
+            'administrator', 'graphjs',
+            $graphjs_main_menu_page, 'dashicons-admin-generic');
+
+        $graphjs_settings_menu_page = function () {
+            $path = $this->pluginDirectory . '/view/setting_view.php';
+            include $path;
+        };
+
+        add_submenu_page('graphjs', 'GraphJS Settings', 'Settings',
             'administrator', 'graphjs-settings',
-            $graphjs_settings_page, 'dashicons-admin-generic');
+            $graphjs_settings_menu_page);
     }
 
     public function addActionLinks()
