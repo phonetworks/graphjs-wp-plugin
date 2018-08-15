@@ -1,5 +1,5 @@
 <div class="wrap">
-    <h1>GraphJS</h1>
+    <h1>Tutorial</h1>
 
     <h2>Usage</h2>
     <p>
