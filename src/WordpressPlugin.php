@@ -128,6 +128,10 @@ class WordpressPlugin
             include $path;
         };
 
+        add_submenu_page('graphjs', 'Tutorial', 'Tutorial',
+            'administrator', 'graphjs',
+            $graphjs_main_menu_page);
+
         add_submenu_page('graphjs', 'GraphJS Settings', 'Settings',
             'administrator', 'graphjs-settings',
             $graphjs_settings_menu_page);
