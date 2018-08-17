@@ -37,6 +37,15 @@
                            placeholder="Example: #fe8945">
                 </td>
             </tr>
+
+            <tr>
+                <th scope="row">Comment Override</th>
+                <td>
+                    <input type="checkbox" name="<?= esc_attr( \Graphjs\WordpressPlugin::GRAPHJS_OVERRIDE_COMMENT ) ?>"
+                            <?php checked(get_option(\Graphjs\WordpressPlugin::GRAPHJS_OVERRIDE_COMMENT)) ?>>
+                    Override default comment with GraphJS Comment using <code>&lt;graphjs-comments&gt;</code>
+                </td>
+            </tr>
         </table>
 
         <?php submit_button(); ?>
