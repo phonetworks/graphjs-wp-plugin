@@ -7,8 +7,10 @@ class WordpressPlugin
     const GRAPHJS_UUID = 'graphjs_uuid';
     const GRAPHJS_THEME = 'graphjs_theme';
     const GRAPHJS_COLOR = 'graphjs_color';
+    const GRAPHJS_OVERRIDE_COMMENT = 'graphjs_override_comment';
 
     const GRAPHJS_DEFAULT_THEME = "light";
+    const GRAPHJS_DEFAULT_OVERRIDE_COMMENT = false;
 
     private $pluginFile;
     private $pluginDirectory;
@@ -34,6 +36,7 @@ class WordpressPlugin
 
         $this->registerShortcodes();
         $this->registerActions();
+        $this->registerFilters();
     }
 
     public function registerActivationHook()
@@ -66,6 +69,11 @@ class WordpressPlugin
         $color = get_option(self::GRAPHJS_COLOR);
         if ($color === false) {
             add_option(self::GRAPHJS_COLOR, "");
+        }
+
+        $overrideComment = get_option(self::GRAPHJS_OVERRIDE_COMMENT);
+        if ($overrideComment == false) {
+            add_option(self::GRAPHJS_OVERRIDE_COMMENT, self::GRAPHJS_DEFAULT_OVERRIDE_COMMENT);
         }
     }
 
@@ -148,11 +156,31 @@ class WordpressPlugin
         add_filter("plugin_action_links_$plugin_file", $fn);
     }
 
+    public function registerFilters()
+    {
+        add_filter('comments_template', function () {
+            return $this->getCommentTemplate();
+        });
+    }
+
+    public function getCommentTemplate()
+    {
+        if ($this->overrideCommentTemplate()) {
+            return plugin_dir_path( dirname( __FILE__ ) ) . 'view/comment.php';
+        }
+    }
+
+    public function overrideCommentTemplate()
+    {
+        return boolval(get_option(self::GRAPHJS_OVERRIDE_COMMENT));
+    }
+
     public function registerSettings()
     {
         // Register allowed form fields of setting
         register_setting('graphjs_options', self::GRAPHJS_UUID, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_THEME, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_COLOR, 'strval');
+        register_setting('graphjs_options', self::GRAPHJS_OVERRIDE_COMMENT, 'boolval');
     }
 }
