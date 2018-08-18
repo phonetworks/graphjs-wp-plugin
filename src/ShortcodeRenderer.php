@@ -20,7 +20,12 @@ class ShortcodeRenderer
         $domElement = $dom->createElement($this->element);
 
         foreach ($atts as $attributeName => $attributeValue) {
-            $domAttribute = $dom->createAttribute($attributeName);
+            try {
+                $domAttribute = $dom->createAttribute($attributeName);
+            }
+            catch (\DOMException $ex) {
+                continue;
+            }
             $domAttribute->value = $attributeValue;
             $domElement->appendChild($domAttribute);
         }
