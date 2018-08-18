@@ -1,8 +1,11 @@
 <?php
 /*
 Plugin Name: GraphJS
+Plugin URI: https://graphjs.com
 Description: Easy way to install GraphJS on Wordpress
 Version: 1.0.0
+Author: GROU.PS INC.
+Author URI: https://www.groups-inc.com/
 */
 
 // PSR-4 autoloading
