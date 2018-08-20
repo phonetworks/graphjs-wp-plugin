@@ -3,7 +3,7 @@
 This WordPress plugin provides easy way to use [GraphJS](https://graphjs.com/) in WordPress based website.
 It provides set of shortcodes that generates equivalent GraphJS HTML element.
 
-For more information on available GraphJS elements, see https://graphjs.com/docs.
+For more information on available GraphJS elements, see [https://graphjs.com/docs](https://graphjs.com/docs).
 
 ## Usage
 
