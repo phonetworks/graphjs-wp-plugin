@@ -72,7 +72,7 @@ class WordpressPlugin
         }
 
         $overrideComment = get_option(self::GRAPHJS_OVERRIDE_COMMENT);
-        if ($overrideComment == false) {
+        if ($overrideComment === false) {
             add_option(self::GRAPHJS_OVERRIDE_COMMENT, self::GRAPHJS_DEFAULT_OVERRIDE_COMMENT);
         }
     }
@@ -84,9 +84,10 @@ class WordpressPlugin
 
     public static function uninstall()
     {
-        delete_option(GRAPHJS_UUID);
-        delete_option(GRAPHJS_THEME);
-        delete_option(GRAPHJS_COLOR);
+        delete_option(self::GRAPHJS_UUID);
+        delete_option(self::GRAPHJS_THEME);
+        delete_option(self::GRAPHJS_COLOR);
+        delete_option(self::GRAPHJS_OVERRIDE_COMMENT);
     }
 
     public function registerShortcodes()
