@@ -119,6 +119,72 @@ class WordpressPlugin
         });
 
         add_action('wp_footer', [ $this, 'my_custom_admin_head' ]);
+
+        add_action('login_head', function () {
+            global $error;
+
+            if ($this->useGraphjsLogin()) {
+                if (! empty($_POST['log']) || ! empty($_POST['pwd'])) {
+                    return;
+                }
+
+                if (! empty($_POST['graphjs_username']) && empty($_POST['graphjs_password'])) {
+                    $error .= 'GraphJS Password is required';
+                }
+                if (! empty($_POST['graphjs_password']) && empty($_POST['graphjs_username'])) {
+                    $error .= 'GraphJS Username is required';
+                }
+            }
+        });
+
+        add_filter('authenticate', function ($user, $username, $password) {
+            if ($user instanceof \WP_User) {
+                return $user;
+            }
+
+            if ($this->useGraphjsLogin()) {
+
+                if (! empty($_POST['graphjs_username']) && empty($_POST['graphjs_password'])) {
+                    $user->add('graphjs_password', '<strong>ERROR</strong>: The GraphJS Password field is empty.');
+                }
+                if (! empty($_POST['graphjs_password']) && empty($_POST['graphjs_username'])) {
+                    $user->add('graphjs_username', '<strong>ERROR</strong>: The GraphJS Username field is empty.');
+                }
+
+                $isValid = ! empty($_POST['graphjs_username']) && ! empty($_POST['graphjs_password']);
+
+                if ($isValid) {
+                    // return a valid user
+                    // $user = new \WP_User(\WP_User::get_data_by('id', 1));
+                }
+            }
+
+            return $user;
+        }, 30, 3);
+
+        add_action('login_form', function () {
+            $username = isset($_POST['graphjs_username']) ? $_POST['graphjs_username'] : '';
+            $password = isset($_POST['graphjs_password']) ? $_POST['graphjs_password'] : '';
+            echo <<<HTML
+<p style="text-align: center;">
+OR <br> <h3 style="text-align: center;">Login using GraphJS</h3>
+</p>
+<p>
+    <label for="graphjs_username">
+        GraphJS Username
+        <br>
+        <input type="text" id="graphjs_username" class="input" name="graphjs_username" value="$username" size="20">
+    </label>
+</p>
+<p>
+    <label for="graphjs_password">
+        GraphJS Password
+        <br>
+        <input type="password" id="graphjs_password" class="input" name="graphjs_password" value="$password" size="20">
+    </label>
+</p>
+HTML;
+        });
     }
 
     public function my_custom_admin_head()
@@ -181,6 +247,11 @@ class WordpressPlugin
     public function overrideCommentTemplate()
     {
         return boolval(get_option(self::GRAPHJS_OVERRIDE_COMMENT));
+    }
+
+    public function useGraphjsLogin()
+    {
+        return boolval(get_option(self::GRAPHJS_USE_GRAPHJS_LOGIN));
     }
 
     public function registerSettings()
