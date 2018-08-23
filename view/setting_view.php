@@ -48,6 +48,15 @@
                     Override default comment with GraphJS Comment using <code>&lt;graphjs-comments&gt;</code>
                 </td>
             </tr>
+
+            <tr>
+                <th scope="row">Use GraphJS Login</th>
+                <td>
+                    <input type="checkbox" name="<?= esc_attr( \Graphjs\WordpressPlugin::GRAPHJS_USE_GRAPHJS_LOGIN ) ?>"
+                            <?php checked(get_option(\Graphjs\WordpressPlugin::GRAPHJS_USE_GRAPHJS_LOGIN)) ?>>
+                    Use GraphJS Login for logging into WordPress
+                </td>
+            </tr>
         </table>
 
         <?php submit_button(); ?>

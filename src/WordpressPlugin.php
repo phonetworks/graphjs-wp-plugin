@@ -190,5 +190,6 @@ class WordpressPlugin
         register_setting('graphjs_options', self::GRAPHJS_THEME, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_COLOR, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_OVERRIDE_COMMENT, 'boolval');
+        register_setting('graphjs_options', self::GRAPHJS_USE_GRAPHJS_LOGIN, 'boolval');
     }
 }
