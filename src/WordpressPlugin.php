@@ -8,9 +8,11 @@ class WordpressPlugin
     const GRAPHJS_THEME = 'graphjs_theme';
     const GRAPHJS_COLOR = 'graphjs_color';
     const GRAPHJS_OVERRIDE_COMMENT = 'graphjs_override_comment';
+    const GRAPHJS_USE_GRAPHJS_LOGIN = 'graphjs_use_graphjs_login';
 
     const GRAPHJS_DEFAULT_THEME = "light";
     const GRAPHJS_DEFAULT_OVERRIDE_COMMENT = false;
+    const GRAPHJS_DEFAULT_USE_GRAPHJS_LOGIN = false;
 
     private $pluginFile;
     private $pluginDirectory;
@@ -74,6 +76,11 @@ class WordpressPlugin
         $overrideComment = get_option(self::GRAPHJS_OVERRIDE_COMMENT);
         if ($overrideComment === false) {
             add_option(self::GRAPHJS_OVERRIDE_COMMENT, self::GRAPHJS_DEFAULT_OVERRIDE_COMMENT);
+        }
+
+        $useGraphjsLogin = get_option(self::GRAPHJS_USE_GRAPHJS_LOGIN);
+        if ($useGraphjsLogin === false) {
+            add_option(self::GRAPHJS_USE_GRAPHJS_LOGIN, self::GRAPHJS_DEFAULT_USE_GRAPHJS_LOGIN);
         }
     }
 
