@@ -17,17 +17,19 @@ class WordpressPlugin
     private $pluginFile;
     private $pluginDirectory;
     private $graphjs;
+    private $graphjsApi;
 
     /**
      * @param string $pluginFile
      * @param string $pluginDirectory
      * @param Graphjs $graphjs
      */
-    public function __construct($pluginFile, $pluginDirectory, Graphjs $graphjs)
+    public function __construct($pluginFile, $pluginDirectory, Graphjs $graphjs, GraphjsApi $graphjsApi)
     {
         $this->pluginFile = $pluginFile;
         $this->pluginDirectory = $pluginDirectory;
         $this->graphjs = $graphjs;
+        $this->graphjsApi = $graphjsApi;
     }
 
     public function bootstrap()
@@ -140,33 +142,7 @@ class WordpressPlugin
             }
         });
 
-        add_filter('authenticate', function ($user, $username, $password) {
-
-            // Default login is successful
-            if ($user instanceof \WP_User) {
-                return $user;
-            }
-
-            if (! $this->useGraphjsLogin()) {
-                return $user;
-            }
-
-            if (! empty($_POST['graphjs_username']) && empty($_POST['graphjs_password'])) {
-                $user->add('graphjs_password', '<strong>ERROR</strong>: The GraphJS Password field is empty.');
-            }
-            if (! empty($_POST['graphjs_password']) && empty($_POST['graphjs_username'])) {
-                $user->add('graphjs_username', '<strong>ERROR</strong>: The GraphJS Username field is empty.');
-            }
-
-            $isValid = ! empty($_POST['graphjs_username']) && ! empty($_POST['graphjs_password']);
-
-            if ($isValid) {
-                // return a valid user
-                // $user = new \WP_User(\WP_User::get_data_by('id', 1));
-            }
-
-            return $user;
-        }, 30, 3);
+        add_filter('authenticate', [ $this, 'authenticate' ], 30, 3);
 
         add_action('login_form', function () {
 
@@ -196,6 +172,211 @@ OR <br> <h3 style="text-align: center;">Login using GraphJS</h3>
 </p>
 HTML;
         });
+    }
+
+    public function authenticate($user, $username, $password)
+    {
+        // Default login is successful
+        if ($user instanceof \WP_User) {
+            return $user;
+        }
+
+        return $this->authenticateGraphjs($user);
+    }
+
+    public function authenticateGraphjs(\WP_Error $wpError)
+    {
+        if (! $this->useGraphjsLogin()) {
+            return $wpError;
+        }
+
+        if (! empty($_POST['graphjs_username']) && empty($_POST['graphjs_password'])) {
+            $wpError->add('graphjs_password', '<strong>ERROR</strong>: The GraphJS Password field is empty.');
+        }
+        if (! empty($_POST['graphjs_password']) && empty($_POST['graphjs_username'])) {
+            $wpError->add('graphjs_username', '<strong>ERROR</strong>: The GraphJS Username field is empty.');
+        }
+
+        // check form data
+        $isValid = ! empty($_POST['graphjs_username']) && ! empty($_POST['graphjs_password']);
+        if (! $isValid) {
+            return $wpError;
+        }
+
+        $username = $_POST['graphjs_username'];
+        $password = $_POST['graphjs_password'];
+
+        // get graphjs user id from API
+        $graphjsUserId = $this->getGraphjsUserId($username, $password, $wpError);
+        if ($graphjsUserId instanceof \WP_Error) {
+            return $graphjsUserId;
+        }
+
+        // get user having graphjs user id
+        $user = $this->getUserByGraphjsUserId($graphjsUserId);
+        if ($user instanceof \WP_User) {
+            return $user;
+        }
+
+        // get profile from API
+        $profile = $this->getGraphjsUserProfile($graphjsUserId, $wpError);
+        if ($profile instanceof \WP_Error) {
+            return $profile;
+        }
+
+        $email = $profile['email'];
+
+        // get user having same email as graphjs profile
+        $user = get_user_by('email', $email);
+        if ($user instanceof \WP_User) {
+            if (($ret = $this->setGraphjsUserIdOfUser($user->ID, $graphjsUserId, $wpError)) instanceof \WP_Error) {
+                return $ret;
+            }
+            return $user;
+        }
+
+        // check if user registration is enabled
+        if (! $this->canUserRegister()) {
+            return $wpError;
+        }
+
+        $newUsername = $this->getNewUsername($profile['username']);
+        $newPassword = password_hash($this->randomPassword(10), PASSWORD_DEFAULT);
+        $user = $this->registerUser($newUsername, $newPassword, $email, $wpError);
+        if ($user instanceof \WP_Error) {
+            return $user;
+        }
+        if (($ret = $this->setGraphjsUserIdOfUser($user->ID, $graphjsUserId, $wpError)) instanceof \WP_Error) {
+            return $ret;
+        }
+        return $user;
+    }
+
+    /**
+     * @param string username
+     * @return string
+     */
+    public function getNewUsername($username = '')
+    {
+        // TODO: generate unique username
+        return $username;
+    }
+
+    /**
+     * @param int $length
+     * @return string
+     */
+    public function randomPassword($length) {
+        $chars =  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.
+            '0123456789`-=~!@#$%^&*()_+,./<>?;:[]{}\|';
+
+        $str = '';
+        $max = strlen($chars) - 1;
+
+        for ($i=0; $i < $length; $i++)
+            $str .= $chars[mt_rand(0, $max)];
+
+        return $str;
+    }
+
+    /**
+     * @param string $graphjsUserId
+     * @return null|string
+     */
+    public function getUserByGraphjsUserId($graphjsUserId)
+    {
+        $users = get_users([
+            'meta_key' => 'graphjs_user_id',
+            'meta_value' => $graphjsUserId,
+        ]);
+
+        return empty($users) ? null : current($users);
+    }
+
+    /**
+     * @param string $username
+     * @param string $password
+     * @param \WP_Error $wpError
+     * @return string|\WP_Error
+     */
+    public function getGraphjsUserId($username, $password, \WP_Error $wpError)
+    {
+        $response = $this->graphjsApi->login([
+            'username' => $username,
+            'password' => $password,
+        ]);
+
+        if ($response instanceof \WP_Error) {
+            $wpError->errors += $response->errors;
+            return $wpError;
+        }
+
+        $apiResponse = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($apiResponse['success'] === false) {
+            $wpError->add('invalid_graphjs_credentials', $apiResponse['reason']);
+            return $wpError;
+        }
+
+        return $apiResponse['id'];
+    }
+
+    /**
+     * @param string $graphjsUserId
+     * @param \WP_Error $wpError
+     * @return array|\WP_Error
+     */
+    public function getGraphjsUserProfile($graphjsUserId, \WP_Error $wpError)
+    {
+        $response = $this->graphjsApi->getProfile([
+            'id' => $graphjsUserId,
+        ]);
+
+        if ($response instanceof \WP_Error) {
+            $wpError->errors += $response->errors;
+            return $wpError;
+        }
+
+        $apiResponse = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($apiResponse['success'] === false) {
+            $wpError->add('invalid_graphjs_credentials', $apiResponse['reason']);
+            return $wpError;
+        }
+
+        return $apiResponse['profile'];
+    }
+
+    /**
+     * @param int $userId
+     * @param string $graphjsUserId
+     * @param \WP_Error $wpError
+     * @return true|\WP_Error
+     */
+    public function setGraphjsUserIdOfUser($userId, $graphjsUserId, \WP_Error $wpError)
+    {
+        $metaId = add_user_meta($userId, 'graphjs_user_id', $graphjsUserId, true);
+        if ($metaId === false) {
+            $wpError->add('user_meta_assign_failed', 'Failed to assign user meta <strong>graphjs_user_id</strong>');
+            return $wpError;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return \WP_User|\WP_Error
+     */
+    public function registerUser($username, $password, $email, \WP_Error $wpError)
+    {
+        // create new user
+        $userId = wp_create_user($username, $password, $email);
+        if ($userId instanceof \WP_Error) {
+            $wpError->errors += $userId->errors;
+            return $wpError;
+        }
+
+        return get_user_by('id', $userId);
     }
 
     public function my_custom_admin_head()
@@ -263,6 +444,14 @@ HTML;
     public function useGraphjsLogin()
     {
         return boolval(get_option(self::GRAPHJS_USE_GRAPHJS_LOGIN));
+    }
+
+    /**
+     * @return bool
+     */
+    public function canUserRegister()
+    {
+        return boolval(get_option('users_can_register'));
     }
 
     public function registerSettings()
