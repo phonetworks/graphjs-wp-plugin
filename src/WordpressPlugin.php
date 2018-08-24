@@ -122,26 +122,6 @@ class WordpressPlugin
 
         add_action('wp_footer', [ $this, 'my_custom_admin_head' ]);
 
-        add_action('login_head', function () {
-
-            if (! $this->useGraphjsLogin()) {
-                return;
-            }
-
-            global $error;
-
-            if (! empty($_POST['log']) || ! empty($_POST['pwd'])) {
-                return;
-            }
-
-            if (! empty($_POST['graphjs_username']) && empty($_POST['graphjs_password'])) {
-                $error .= 'GraphJS Password is required';
-            }
-            if (! empty($_POST['graphjs_password']) && empty($_POST['graphjs_username'])) {
-                $error .= 'GraphJS Username is required';
-            }
-        });
-
         add_filter('authenticate', [ $this, 'authenticate' ], 30, 3);
 
         add_action('login_form', function () {
@@ -152,25 +132,7 @@ class WordpressPlugin
 
             $username = isset($_POST['graphjs_username']) ? $_POST['graphjs_username'] : '';
             $password = isset($_POST['graphjs_password']) ? $_POST['graphjs_password'] : '';
-            echo <<<HTML
-<p style="text-align: center;">
-OR <br> <h3 style="text-align: center;">Login using GraphJS</h3>
-</p>
-<p>
-    <label for="graphjs_username">
-        GraphJS Username
-        <br>
-        <input type="text" id="graphjs_username" class="input" name="graphjs_username" value="$username" size="20">
-    </label>
-</p>
-<p>
-    <label for="graphjs_password">
-        GraphJS Password
-        <br>
-        <input type="password" id="graphjs_password" class="input" name="graphjs_password" value="$password" size="20">
-    </label>
-</p>
-HTML;
+            include $this->pluginDirectory . '/view/graphjs_login.php';
         });
     }
 
@@ -189,6 +151,10 @@ HTML;
         if (! $this->useGraphjsLogin()) {
             return $wpError;
         }
+
+        // remove validation error of default login
+        $wpError->remove('empty_username');
+        $wpError->remove('empty_password');
 
         if (! empty($_POST['graphjs_username']) && empty($_POST['graphjs_password'])) {
             $wpError->add('graphjs_password', '<strong>ERROR</strong>: The GraphJS Password field is empty.');
@@ -237,6 +203,7 @@ HTML;
 
         // check if user registration is enabled
         if (! $this->canUserRegister()) {
+            $wpError->add('graphjs_login_failed', '<strong>ERROR</strong>: Registration disabled. Failed to login.');
             return $wpError;
         }
 
@@ -253,7 +220,7 @@ HTML;
     }
 
     /**
-     * @param string username
+     * @param string $username
      * @return string
      */
     public function getNewUsername($username = '')
@@ -314,7 +281,7 @@ HTML;
         $apiResponse = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($apiResponse['success'] === false) {
-            $wpError->add('invalid_graphjs_credentials', $apiResponse['reason']);
+            $wpError->add('graphjs_login_failed', '<strong>ERROR</strong>: Invalid GraphJS credentials');
             return $wpError;
         }
 
@@ -340,7 +307,7 @@ HTML;
         $apiResponse = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($apiResponse['success'] === false) {
-            $wpError->add('invalid_graphjs_credentials', $apiResponse['reason']);
+            $wpError->add('graphjs_login_failed', '<strong>ERROR</strong>: Failed to retrieve GraphJS profile');
             return $wpError;
         }
 
@@ -357,7 +324,7 @@ HTML;
     {
         $metaId = add_user_meta($userId, 'graphjs_user_id', $graphjsUserId, true);
         if ($metaId === false) {
-            $wpError->add('user_meta_assign_failed', 'Failed to assign user meta <strong>graphjs_user_id</strong>');
+            $wpError->add('graphjs_login_failed', '<strong>ERROR</strong>: Failed to assign user meta <strong>graphjs_user_id</strong>');
             return $wpError;
         }
 
