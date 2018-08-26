@@ -37,6 +37,39 @@ class WordpressPlugin
         $this->registerShortcodes();
         $this->registerActions();
         $this->registerFilters();
+
+        if (is_admin()) {
+            add_action('load-post.php', [ $this, 'initMetabox' ]);
+            add_action('load-post-new.php', [ $this, 'initMetabox' ]);
+        }
+    }
+
+    public function initMetabox()
+    {
+        add_action('add_meta_boxes', [ $this, 'addMetabox' ]);
+        add_action('save_post', [ $this, 'saveMetabox' ], 10, 2);
+    }
+
+    public function addMetabox($postType)
+    {
+        $supportedPostTypes = [ 'post', 'page' ];
+
+        if (in_array($postType, $supportedPostTypes)) {
+            add_meta_box(
+                'graphjs-admin-content-restriction',
+                'GraphJS Content Restriction',
+                [$this, 'renderMetabox'],
+                $postType,
+                'advanced',
+                'default'
+            );
+        }
+    }
+
+    public function renderMetabox()
+    {
+        include $this->pluginDirectory . '/view/content_restriction_metabox.php';
+        wp_nonce_field('custom_nonce_action', 'custom_nonce');
     }
 
     public function registerActivationHook()
