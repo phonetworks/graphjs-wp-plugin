@@ -66,10 +66,27 @@ class WordpressPlugin
         }
     }
 
-    public function renderMetabox()
+    public function renderMetabox(\WP_Post $post)
     {
+        $graphjsContentRestriction = get_post_meta($post->ID, 'graphjs_restrict_content', true);
+        $contentRestriction = boolval($graphjsContentRestriction);
         include $this->pluginDirectory . '/view/content_restriction_metabox.php';
         wp_nonce_field('custom_nonce_action', 'custom_nonce');
+    }
+
+    public function saveMetabox($postId, \WP_Post $post)
+    {
+        /**
+         * If this is an autosave, our form has not been submitted,
+         * so we don't want to do anything.
+         */
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return $postId;
+        }
+
+        $contentRestriction = $_POST['graphjs_content_restriction_status'];
+        $metaValue = ($contentRestriction === 'on') ? true : false;
+        update_post_meta($postId, 'graphjs_restrict_content', $metaValue);
     }
 
     public function registerActivationHook()
