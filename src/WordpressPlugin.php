@@ -37,11 +37,6 @@ class WordpressPlugin
         $this->registerShortcodes();
         $this->registerActions();
         $this->registerFilters();
-
-        if (is_admin()) {
-            add_action('load-post.php', [ $this, 'initMetabox' ]);
-            add_action('load-post-new.php', [ $this, 'initMetabox' ]);
-        }
     }
 
     public function initMetabox()
@@ -70,8 +65,10 @@ class WordpressPlugin
     {
         $graphjsContentRestriction = get_post_meta($post->ID, 'graphjs_restrict_content', true);
         $contentRestriction = boolval($graphjsContentRestriction);
+
+        $graphjsId = get_post_meta($post->ID, 'graphjs_id', true);
+
         include $this->pluginDirectory . '/view/content_restriction_metabox.php';
-        wp_nonce_field('custom_nonce_action', 'custom_nonce');
     }
 
     public function saveMetabox($postId, \WP_Post $post)
@@ -85,8 +82,15 @@ class WordpressPlugin
         }
 
         $contentRestriction = $_POST['graphjs_content_restriction_status'];
-        $metaValue = ($contentRestriction === 'on') ? true : false;
-        update_post_meta($postId, 'graphjs_restrict_content', $metaValue);
+        $isRestricted = ($contentRestriction === 'on');
+        update_post_meta($postId, 'graphjs_restrict_content', $isRestricted);
+
+        if ($isRestricted) {
+            $id = $_POST['graphjs_content_restriction_id'];
+            if ($id) {
+                update_post_meta($postId, 'graphjs_id', $id);
+            }
+        }
     }
 
     public function registerActivationHook()
@@ -162,6 +166,34 @@ class WordpressPlugin
         });
 
         add_action('wp_footer', [ $this, 'my_custom_admin_head' ]);
+
+        if (is_admin()) {
+            add_action('load-post.php', [ $this, 'initMetabox' ]);
+            add_action('load-post-new.php', [ $this, 'initMetabox' ]);
+
+            $callback = function () {
+                add_action('admin_footer', [ $this, 'my_custom_admin_head' ]);
+            };
+
+            add_action('load-post.php', $callback);
+            add_action('load-post-new.php', $callback);
+        }
+
+        add_action('admin_footer', [ $this, 'my_custom_admin_head' ]);
+
+        add_action('admin_enqueue_scripts', [ $this, 'enqueueAdminScript' ]);
+    }
+
+    public function enqueueAdminScript($hook)
+    {
+        $args = func_get_args();
+        global $post;
+
+        if (in_array($hook, [ 'post-new.php', 'post.php' ])) {
+            if (in_array($post->post_type, [ 'post', 'page' ])) {
+                wp_enqueue_script('graphjs-post-submit', plugin_dir_url($this->pluginFile) . 'js/post_submit.js', 'jquery');
+            }
+        }
     }
 
     public function my_custom_admin_head()
