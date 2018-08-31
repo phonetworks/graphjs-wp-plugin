@@ -52,10 +52,13 @@
             <tr>
                 <th scope="row">Connect with GraphJS</th>
                 <td>
-                    <?php if ($graphjsUsername): ?>
-                        <div>Connected as <strong id="graphjs_username"><?= $graphjsUsername ?></strong></div>
-                    <?php else: ?>
-                        <div>
+                    <div id="graphjs_user" class="<?= $graphjsUsername ? '' : 'hidden' ?>">Connected as <strong id="graphjs_username"><?= $graphjsUsername ?></strong></div>
+                    <div id="graphjs_auth_tabs" class="<?= ! $graphjsUsername ? '' : 'hidden' ?>" style="max-width: 450px;">
+                        <ul>
+                            <li><a href="#tabs_login">Login</a></li>
+                            <li><a href="#tabs_register">Register</a></li>
+                        </ul>
+                        <div id="tabs_login">
                             <div>
                                 Username:
                                 <br>
@@ -66,13 +69,34 @@
                                 <br>
                                 <input type="password" id="graphjs_login_password" name="<?= esc_attr( $inputNameGraphjsPassword ) ?>" class="regular-text">
                             </div>
-                            <div><input type="hidden" id="graphjs_login_status" name="graphjs_login_status"></div>
-                            <div id="graphjs_response"></div>
+                            <div id="graphjs_login_response"></div>
                             <div>
-                                <button type="button" id="graphjs_login_button">Connect</button>
+                                <button type="button" id="graphjs_login_button" class="button button-default">Login</button>
                             </div>
                         </div>
-                    <?php endif ?>
+                        <div id="tabs_register">
+                            <div>
+                                Username:
+                                <br>
+                                <input type="text" id="graphjs_register_username" name="<?= esc_attr( $inputNameGraphjsUsername ) ?>" class="regular-text">
+                            </div>
+                            <div>
+                                Email:
+                                <br>
+                                <input type="text" id="graphjs_register_email" class="regular-text">
+                            </div>
+                            <div>
+                                Password:
+                                <br>
+                                <input type="password" id="graphjs_register_password" name="<?= esc_attr( $inputNameGraphjsPassword ) ?>" class="regular-text">
+                            </div>
+                            <div id="graphjs_register_response"></div>
+                            <div>
+                                <button type="button" id="graphjs_register_button" class="button button-default">Register</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div><input type="hidden" id="graphjs_login_status" name="graphjs_login_status"></div>
                 </td>
             </tr>
         </table>
@@ -81,44 +105,3 @@
 
     </form>
 </div>
-
-<script>
-
-(function ($) {
-
-    function disableFormSubmitOnEnter(jqElement) {
-        jqElement.keydown(function(event) {
-            if(event.keyCode == 13) {
-                event.preventDefault();
-            }
-        });
-    }
-
-    $(function() {
-        disableFormSubmitOnEnter($('#graphjs_login_username'));
-        disableFormSubmitOnEnter($('#graphjs_login_password'));
-
-        $('#graphjs_login_button').on('click', function () {
-
-            var txtUsername = $('#graphjs_login_username');
-            var txtPassword = $('#graphjs_login_password');
-            var msgGraphjsResponse = $('#graphjs_response');
-            var inputLoginStatus = $('#graphjs_login_status');
-
-            var username = txtUsername.val();
-            var password = txtPassword.val();
-
-            GraphJS.login(username, password, function (responseJson) {
-                if (responseJson.success === false) {
-                    msgGraphjsResponse.text("Error: " + responseJson.reason);
-                    inputLoginStatus.val('');
-                    return;
-                }
-                msgGraphjsResponse.text("Successful");
-                inputLoginStatus.val('success');
-            });
-        });
-    });
-})(jQuery);
-
-</script>

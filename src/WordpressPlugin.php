@@ -190,11 +190,22 @@ class WordpressPlugin
     public function enqueueAdminScript($hook)
     {
         global $post;
+        global $pluginOptions;
+
+        $wp_scripts = wp_scripts();
 
         if (in_array($hook, [ 'post-new.php', 'post.php' ])) {
             if (in_array($post->post_type, [ 'post', 'page' ])) {
                 wp_enqueue_script('graphjs-post-submit', plugin_dir_url($this->pluginFile) . 'js/post_submit.js', 'jquery');
             }
+        }
+
+        if ($hook === 'graphjs_page_graphjs-settings') {
+            wp_enqueue_script('graphjs-jquery-ui-js', plugin_dir_url($this->pluginFile) . 'js/setting.js', [ 'jquery-ui-tabs' ]);
+            wp_enqueue_style(
+                'graphjs-jquery-ui-css',
+                'http://ajax.googleapis.com/ajax/libs/jqueryui/' . $wp_scripts->registered['jquery-ui-core']->ver . '/themes/smoothness/jquery-ui.css'
+            );
         }
     }
 
