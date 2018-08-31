@@ -81,12 +81,12 @@ class WordpressPlugin
             return $postId;
         }
 
-        $contentRestriction = $_POST['graphjs_content_restriction_status'];
+        $contentRestriction = $_POST['graphjs_content_restriction_status'] ?? null;
         $isRestricted = ($contentRestriction === 'on');
         update_post_meta($postId, 'graphjs_restrict_content', $isRestricted);
 
         if ($isRestricted) {
-            $id = $_POST['graphjs_content_restriction_id'];
+            $id = $_POST['graphjs_content_restriction_id'] ?? null;
             if ($id) {
                 update_post_meta($postId, 'graphjs_id', $id);
             }
@@ -186,7 +186,6 @@ class WordpressPlugin
 
     public function enqueueAdminScript($hook)
     {
-        $args = func_get_args();
         global $post;
 
         if (in_array($hook, [ 'post-new.php', 'post.php' ])) {
