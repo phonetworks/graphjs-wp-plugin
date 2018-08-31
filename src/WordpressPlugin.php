@@ -12,6 +12,9 @@ class WordpressPlugin
     const GRAPHJS_DEFAULT_THEME = "light";
     const GRAPHJS_DEFAULT_OVERRIDE_COMMENT = false;
 
+    const GRAPHJS_USERNAME = 'graphjs_username';
+    const GRAPHJS_PASSWORD = 'graphjs_password';
+
     private $pluginFile;
     private $pluginDirectory;
     private $graphjs;
@@ -214,6 +217,9 @@ class WordpressPlugin
             $graphjs_main_menu_page, 'dashicons-admin-generic');
 
         $graphjs_settings_menu_page = function () {
+            $inputNameGraphjsUsername = self::GRAPHJS_USERNAME;
+            $inputNameGraphjsPassword = self::GRAPHJS_PASSWORD;
+            $graphjsUsername = get_option(self::GRAPHJS_USERNAME);
             $path = $this->pluginDirectory . '/view/setting_view.php';
             include $path;
         };
@@ -243,6 +249,32 @@ class WordpressPlugin
         add_filter('comments_template', function () {
             return $this->getCommentTemplate();
         });
+
+        add_filter('whitelist_options', [ $this, 'filterWhitelistOptionsOnSave' ], 11);
+    }
+
+    public function filterWhitelistOptionsOnSave($options)
+    {
+        if ($_POST['option_page'] !== 'graphjs_options') {
+            return $options;
+        }
+
+        $graphjsOptions = $options['graphjs_options'] ?? null;
+        if ($graphjsOptions === null) {
+            return $options;
+        }
+
+        $loginStatus = $_POST['graphjs_login_status'] ?? null;
+        if ($loginStatus === null) {
+            return $options;
+        }
+
+        if ($loginStatus !== 'success') {
+            $graphjsOptions = array_diff($graphjsOptions, [ self::GRAPHJS_USERNAME, self::GRAPHJS_PASSWORD ]);
+            $options['graphjs_options'] = $graphjsOptions;
+        }
+
+        return $options;
     }
 
     public function getCommentTemplate()
@@ -264,5 +296,7 @@ class WordpressPlugin
         register_setting('graphjs_options', self::GRAPHJS_THEME, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_COLOR, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_OVERRIDE_COMMENT, 'boolval');
+        register_setting('graphjs_options', self::GRAPHJS_USERNAME, 'strval');
+        register_setting('graphjs_options', self::GRAPHJS_PASSWORD, 'strval');
     }
 }
