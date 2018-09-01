@@ -10,14 +10,10 @@
     }
 
     $(function () {
-        GraphJS.on('afterLogin', function (formData) {
+        GraphJS.on('afterLogin', function () {
 
-            var username = formData[0];
-            var password = formData[1];
-
-            debugger;
             var redirectTo = urlParam('redirect_to');
-            redirectTo = decodeURIComponent(urlParam('redirect_to'));
+            redirectTo = redirectTo ? decodeURIComponent(urlParam('redirect_to')) : redirectTo;
             if (redirectTo) {
                 window.location.href = redirectTo;
             }
