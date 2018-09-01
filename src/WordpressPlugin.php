@@ -261,6 +261,42 @@ class WordpressPlugin
         });
 
         add_filter('whitelist_options', [ $this, 'filterWhitelistOptionsOnSave' ], 11);
+
+        add_filter('template_include', [ $this, 'getTemplateInclude' ], 99);
+
+        add_filter('document_title_parts', [ $this, 'getDocumentTitleParts' ]);
+    }
+
+    public function getTemplateInclude($template)
+    {
+        /**
+         * @var \WP $wp
+         * @var \WP_Query $wp
+         */
+        global $wp, $wp_query;
+
+        if ($wp->request === 'graphjs-login') {
+            $wp_query->is_404 = false;
+            status_header(200);
+            wp_enqueue_script('graphjs-javascript', plugin_dir_url($this->pluginFile) . 'js/public.js', [ 'jquery' ]);
+            $template = $this->pluginDirectory . '/view/login.php';
+        }
+
+        return $template;
+    }
+
+    public function getDocumentTitleParts(array $titleParts)
+    {
+        /**
+         * @var \WP $wp
+         */
+        global $wp;
+
+        if ($wp->request === 'graphjs-login') {
+            $titleParts['title'] = 'GraphJS Login';
+        }
+
+        return $titleParts;
     }
 
     public function filterWhitelistOptionsOnSave($options)
