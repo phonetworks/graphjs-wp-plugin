@@ -31,6 +31,16 @@ class WordpressPlugin
         $this->graphjs = $graphjs;
     }
 
+    public function getPluginFile()
+    {
+        return $this->pluginFile;
+    }
+
+    public function getPluginDirectory()
+    {
+        return $this->pluginDirectory;
+    }
+
     public function bootstrap()
     {
         $this->registerActivationHook();
@@ -185,6 +195,10 @@ class WordpressPlugin
         add_action('admin_footer', [ $this, 'my_custom_admin_head' ]);
 
         add_action('admin_enqueue_scripts', [ $this, 'enqueueAdminScript' ]);
+
+        add_action('widgets_init', function () {
+            register_widget(new Widget($this));
+        });
     }
 
     public function enqueueAdminScript($hook)
