@@ -190,7 +190,6 @@ class WordpressPlugin
     public function enqueueAdminScript($hook)
     {
         global $post;
-        global $pluginOptions;
 
         $wp_scripts = wp_scripts();
 

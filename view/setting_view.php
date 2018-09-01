@@ -52,51 +52,22 @@
             <tr>
                 <th scope="row">Connect with GraphJS</th>
                 <td>
-                    <div id="graphjs_user" class="<?= $graphjsUsername ? '' : 'hidden' ?>">Connected as <strong id="graphjs_username"><?= $graphjsUsername ?></strong></div>
-                    <div id="graphjs_auth_tabs" class="<?= ! $graphjsUsername ? '' : 'hidden' ?>" style="max-width: 450px;">
-                        <ul>
-                            <li><a href="#tabs_login">Login</a></li>
-                            <li><a href="#tabs_register">Register</a></li>
-                        </ul>
-                        <div id="tabs_login">
-                            <div>
-                                Username:
-                                <br>
-                                <input type="text" id="graphjs_login_username" name="<?= esc_attr( $inputNameGraphjsUsername ) ?>" class="regular-text">
-                            </div>
-                            <div>
-                                Password:
-                                <br>
-                                <input type="password" id="graphjs_login_password" name="<?= esc_attr( $inputNameGraphjsPassword ) ?>" class="regular-text">
-                            </div>
-                            <div id="graphjs_login_response"></div>
-                            <div>
-                                <button type="button" id="graphjs_login_button" class="button button-default">Login</button>
-                            </div>
+                    <div id="wrapper_graphjs_current_user" style="<?= $graphjsUsername ? '' : 'display:none' ?>">
+                        <div>
+                            Connected as <strong id="label_graphjs_username"><?= $graphjsUsername ?></strong>
                         </div>
-                        <div id="tabs_register">
-                            <div>
-                                Username:
-                                <br>
-                                <input type="text" id="graphjs_register_username" name="<?= esc_attr( $inputNameGraphjsUsername ) ?>" class="regular-text">
-                            </div>
-                            <div>
-                                Email:
-                                <br>
-                                <input type="text" id="graphjs_register_email" class="regular-text">
-                            </div>
-                            <div>
-                                Password:
-                                <br>
-                                <input type="password" id="graphjs_register_password" name="<?= esc_attr( $inputNameGraphjsPassword ) ?>" class="regular-text">
-                            </div>
-                            <div id="graphjs_register_response"></div>
-                            <div>
-                                <button type="button" id="graphjs_register_button" class="button button-default">Register</button>
-                            </div>
+                        <div>
+                            <button type="button" id="btn_graphjs_change_login" class="button">Change</button>
                         </div>
                     </div>
-                    <div><input type="hidden" id="graphjs_login_status" name="graphjs_login_status"></div>
+                    <div id="wrapper_graphjs_login" style="<?= ! $graphjsUsername ? '' : 'display:none' ?>">
+                        <graphjs-auth-login></graphjs-auth-login>
+                    </div>
+                    <div>
+                        <input type="hidden" id="graphjs_login_status" name="graphjs_login_status">
+                        <input type="hidden" id="txt_graphjs_username" name="graphjs_username">
+                        <input type="hidden" id="txt_graphjs_password" name="graphjs_password">
+                    </div>
                 </td>
             </tr>
         </table>
