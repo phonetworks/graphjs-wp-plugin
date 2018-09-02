@@ -20,6 +20,11 @@
             $('#graphjs_widget_user').show();
             $('#graphjs_widget_login').hide();
         });
+
+        GraphJS.on('afterLogout', function () {
+            $('#graphjs_widget_user').hide();
+            $('#graphjs_widget_login').show();
+        });
     });
 })(jQuery);
 
