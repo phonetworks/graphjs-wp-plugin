@@ -337,6 +337,21 @@ class WordpressPlugin
         add_filter('template_include', [ $this, 'getTemplateInclude' ], 99);
 
         add_filter('document_title_parts', [ $this, 'getDocumentTitleParts' ]);
+
+        add_filter('the_content', function ($content) {
+
+            global $post;
+
+            $restrictContent = get_post_meta($post->ID, 'graphjs_restrict_content', true);
+            if (! $restrictContent) {
+                return $content;
+            }
+
+            $privateContentId = get_post_meta($post->ID, 'graphjs_private_content_id', true);
+            $content = sprintf('<graphjs-private-content id="%s"></graphjs-private-content>', $privateContentId);
+
+            return $content;
+        });
     }
 
     public function getTemplateInclude($template)
