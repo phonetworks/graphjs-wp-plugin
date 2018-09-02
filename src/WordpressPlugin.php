@@ -76,11 +76,19 @@ class WordpressPlugin
 
     public function renderMetabox(\WP_Post $post)
     {
+        $graphjsUsername = get_option(self::GRAPHJS_USERNAME);
+        $graphjsPassword = get_option(self::GRAPHJS_PASSWORD);
         $graphjsContentRestriction = get_post_meta($post->ID, 'graphjs_restrict_content', true);
-        $contentRestriction = boolval($graphjsContentRestriction);
 
-        $graphjsId = get_post_meta($post->ID, 'graphjs_id', true);
+        $viewModel = [];
+        $viewModel['contentRestriction'] = boolval($graphjsContentRestriction);
+        $viewModel['graphjsId'] = get_post_meta($post->ID, 'graphjs_private_content_id', true);
+        $viewModel['isRestrictable'] = $graphjsUsername && $graphjsPassword;
+        $viewModel['graphjsSettingUrl'] = admin_url('admin.php?page=graphjs-settings');
 
+        wp_enqueue_script('graphjs-metabox', plugin_dir_url($this->pluginFile) . 'js/metabox.js', 'jquery');
+
+        extract($viewModel);
         include $this->pluginDirectory . '/view/content_restriction_metabox.php';
     }
 
@@ -94,16 +102,72 @@ class WordpressPlugin
             return $postId;
         }
 
+        $graphjsUsername = get_option(self::GRAPHJS_USERNAME);
+        $graphjsPassword = get_option(self::GRAPHJS_PASSWORD);
+
+        $privateContentId = get_post_meta($postId, 'graphjs_private_content_id', true);
+
+        // return if not connected to GraphJS
+        if (! ($graphjsUsername && $graphjsPassword)) {
+            return;
+        }
+
         $contentRestriction = $_POST['graphjs_content_restriction_status'] ?? null;
         $isRestricted = ($contentRestriction === 'on');
-        update_post_meta($postId, 'graphjs_restrict_content', $isRestricted);
 
         if ($isRestricted) {
-            $id = $_POST['graphjs_content_restriction_id'] ?? null;
-            if ($id) {
-                update_post_meta($postId, 'graphjs_id', $id);
+            $graphjsApi = new GraphjsApi([
+                'publicId' => get_option(self::GRAPHJS_UUID),
+            ]);
+
+            $response = $graphjsApi->login([
+                'username' => $graphjsUsername,
+                'password' => $graphjsPassword,
+            ]);
+            if ($response instanceof \WP_Error) {
+                return;
             }
+            $json = json_decode($response['body'], true);
+            if ($json['success'] === false) {
+                return;
+            }
+
+            $cookies = $response['cookies'];
+            $sessionCookie = current(array_filter($cookies, function (\WP_Http_Cookie $cookie) {
+                return $cookie->name === 'id';
+            }));
+            if ($sessionCookie !== false) {
+                $graphjsApi->setSessionCookie($sessionCookie);
+            }
+            if (! $privateContentId) {
+                $response = $graphjsApi->addPrivateContent([
+                    'data' => $post->post_content,
+                ]);
+                if ($response instanceof \WP_Error) {
+                    return;
+                }
+                $json = json_decode($response['body'], true);
+                if ($json['success'] === false) {
+                    return;
+                }
+                $privateContentId = $json['id'];
+            }
+            else {
+                $response = $graphjsApi->editPrivateContent($privateContentId, [
+                    'data' => $post->post_content,
+                ]);
+                if ($response instanceof \WP_Error) {
+                    return;
+                }
+                $json = json_decode($response['body'], true);
+                if ($json['success'] === false) {
+                    return;
+                }
+            }
+            update_post_meta($postId, 'graphjs_private_content_id', $privateContentId);
         }
+
+        update_post_meta($postId, 'graphjs_restrict_content', $isRestricted);
     }
 
     public function registerActivationHook()
@@ -206,12 +270,6 @@ class WordpressPlugin
         global $post;
 
         $wp_scripts = wp_scripts();
-
-        if (in_array($hook, [ 'post-new.php', 'post.php' ])) {
-            if (in_array($post->post_type, [ 'post', 'page' ])) {
-                wp_enqueue_script('graphjs-post-submit', plugin_dir_url($this->pluginFile) . 'js/post_submit.js', 'jquery');
-            }
-        }
 
         if ($hook === 'graphjs_page_graphjs-settings') {
             wp_enqueue_script('graphjs-jquery-ui-js', plugin_dir_url($this->pluginFile) . 'js/setting.js', [ 'jquery-ui-tabs' ]);
