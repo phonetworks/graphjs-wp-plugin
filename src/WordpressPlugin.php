@@ -15,6 +15,8 @@ class WordpressPlugin
     const GRAPHJS_USERNAME = 'graphjs_username';
     const GRAPHJS_PASSWORD = 'graphjs_password';
 
+    const ERROR_TRANSCIENT_NAME = 'graphjs_error';
+
     private $pluginFile;
     private $pluginDirectory;
     private $graphjs;
@@ -99,7 +101,7 @@ class WordpressPlugin
          * so we don't want to do anything.
          */
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-            return $postId;
+            return;
         }
 
         $graphjsUsername = get_option(self::GRAPHJS_USERNAME);
@@ -125,10 +127,13 @@ class WordpressPlugin
                 'password' => $graphjsPassword,
             ]);
             if ($response instanceof \WP_Error) {
+                set_transient(self::ERROR_TRANSCIENT_NAME, $response, 45);
                 return;
             }
             $json = json_decode($response['body'], true);
             if ($json['success'] === false) {
+                $error = new \WP_Error('graphjs_error', $json['reason']);
+                set_transient(self::ERROR_TRANSCIENT_NAME, $error, 45);
                 return;
             }
 
@@ -144,10 +149,13 @@ class WordpressPlugin
                     'data' => $post->post_content,
                 ]);
                 if ($response instanceof \WP_Error) {
+                    set_transient(self::ERROR_TRANSCIENT_NAME, $response, 45);
                     return;
                 }
                 $json = json_decode($response['body'], true);
                 if ($json['success'] === false) {
+                    $error = new \WP_Error('graphjs_error', $json['reason']);
+                    set_transient(self::ERROR_TRANSCIENT_NAME, $error, 45);
                     return;
                 }
                 $privateContentId = $json['id'];
@@ -157,10 +165,13 @@ class WordpressPlugin
                     'data' => $post->post_content,
                 ]);
                 if ($response instanceof \WP_Error) {
+                    set_transient(self::ERROR_TRANSCIENT_NAME, $response, 45);
                     return;
                 }
                 $json = json_decode($response['body'], true);
                 if ($json['success'] === false) {
+                    $error = new \WP_Error('graphjs_error', $json['reason']);
+                    set_transient(self::ERROR_TRANSCIENT_NAME, $error, 45);
                     return;
                 }
             }
@@ -264,8 +275,23 @@ class WordpressPlugin
             register_widget(new Widget($this));
         });
 
+        add_action('admin_notices', [ $this, 'displayErrorMessage' ]);
+
         add_action('wp_ajax_load_graphjs_private_content', [ $this, 'loadPrivateContentAjax' ]);
         add_action('wp_ajax_nopriv_load_graphjs_private_content', [ $this, 'loadPrivateContentAjax' ]);
+    }
+
+    public function displayErrorMessage()
+    {
+        if ( $error = get_transient( "graphjs_error" ) ) {
+            $message = $error->get_error_message();
+            echo <<<HTML
+<div class="error">
+    <p>$message</p>
+</div>
+HTML;
+            delete_transient("graphjs_error");
+        }
     }
 
     public function loadPrivateContentAjax()
