@@ -17,10 +17,6 @@ class Widget extends \WP_Widget
 
     public function widget($args, $instance)
     {
-        /**
-         * @var \WP_Rewrite $wp_rewrite
-         */
-        global $wp_rewrite;
         $title = ! empty( $instance['title'] ) ? $instance['title'] : 'GraphJS';
 
         /** This filter is documented in wp-includes/widgets/class-wp-widget-pages.php */
@@ -29,10 +25,7 @@ class Widget extends \WP_Widget
         $beforeWidget = $args['before_widget'];
         $title = $title ? $args['before_title'] . $title . $args['after_title'] : '';
         $afterWidget = $args['after_widget'];
-
-        $permalink = $wp_rewrite->get_page_permastruct();
-        $permalink = str_replace('%pagename%', 'graphjs-login', $permalink);
-        $loginUrl = home_url( user_trailingslashit($permalink, 'page'));
+        $loginUrl = $this->wordpressPlugin->getGraphjsLoginUrl();
 
         $widgetView = $this->wordpressPlugin->getPluginDirectory() . '/view/widget.php';
         include $widgetView;

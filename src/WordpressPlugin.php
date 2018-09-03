@@ -263,6 +263,17 @@ class WordpressPlugin
         add_action('widgets_init', function () {
             register_widget(new Widget($this));
         });
+
+        add_action('wp_ajax_load_graphjs_private_content', [ $this, 'loadPrivateContentAjax' ]);
+        add_action('wp_ajax_nopriv_load_graphjs_private_content', [ $this, 'loadPrivateContentAjax' ]);
+    }
+
+    public function loadPrivateContentAjax()
+    {
+        $content = $_POST['contents'];
+        $content = apply_filters('the_content', $content);
+        echo $content;
+        wp_die();
     }
 
     public function enqueueAdminScript($hook)
@@ -282,6 +293,9 @@ class WordpressPlugin
 
     public function my_custom_admin_head()
     {
+        $adminAjaxUrl = wp_json_encode(admin_url('admin-ajax.php'));
+        $graphjsLoginUrl = wp_json_encode($this->getGraphjsLoginUrl());
+
         $path = $this->pluginDirectory . '/view/init.php';
         include $path;
     }
@@ -348,10 +362,25 @@ class WordpressPlugin
             }
 
             $privateContentId = get_post_meta($post->ID, 'graphjs_private_content_id', true);
-            $content = sprintf('<graphjs-private-content id="%s"></graphjs-private-content>', $privateContentId);
+            $content = sprintf('<div data-graphjs-private-content data-graphjs-id="%s"></div>', $privateContentId);
+
+            wp_enqueue_script('graphjs-javascript', plugin_dir_url($this->pluginFile) . 'js/public.js', [ 'jquery' ]);
 
             return $content;
-        });
+        }, 1);
+    }
+
+    public function getGraphjsLoginUrl()
+    {
+        /**
+         * @var \WP_Rewrite $wp_rewrite
+         */
+        global $wp_rewrite;
+        $permalink = $wp_rewrite->get_page_permastruct();
+        $permalink = str_replace('%pagename%', 'graphjs-login', $permalink);
+        $loginUrl = home_url( user_trailingslashit($permalink, 'page'));
+
+        return $loginUrl;
     }
 
     public function getTemplateInclude($template)
