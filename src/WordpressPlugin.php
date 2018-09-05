@@ -119,9 +119,14 @@ class WordpressPlugin
         $isRestricted = ($contentRestriction === 'on');
 
         if ($isRestricted) {
-            $graphjsApi = new GraphjsApi([
+            $config = [
                 'publicId' => get_option(self::GRAPHJS_UUID),
-            ]);
+            ];
+            $host = get_option(self::GRAPHJS_HOST);
+            if ($host) {
+                $config['baseUrl'] = $host;
+            }
+            $graphjsApi = new GraphjsApi($config);
 
             $response = $graphjsApi->login([
                 'username' => $graphjsUsername,
