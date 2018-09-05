@@ -40,6 +40,16 @@
                 </td>
             </tr>
 
+            <tr valign="top">
+                <th scope="row">Host</th>
+                <td>
+                    <input type="text" name="<?= esc_attr( \Graphjs\WordpressPlugin::GRAPHJS_HOST ) ?>"
+                           value="<?= esc_attr( get_option(\Graphjs\WordpressPlugin::GRAPHJS_HOST) ) ?>"
+                           class="regular-text"
+                           placeholder="Example: https://phonetworks.com">
+                </td>
+            </tr>
+
             <tr>
                 <th scope="row">Comment Override</th>
                 <td>
