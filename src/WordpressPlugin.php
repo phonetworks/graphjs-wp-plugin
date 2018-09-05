@@ -7,6 +7,7 @@ class WordpressPlugin
     const GRAPHJS_UUID = 'graphjs_uuid';
     const GRAPHJS_THEME = 'graphjs_theme';
     const GRAPHJS_COLOR = 'graphjs_color';
+    const GRAPHJS_HOST = 'graphjs_host';
     const GRAPHJS_OVERRIDE_COMMENT = 'graphjs_override_comment';
 
     const GRAPHJS_DEFAULT_THEME = "light";
@@ -71,6 +72,11 @@ class WordpressPlugin
             add_option(self::GRAPHJS_COLOR, "");
         }
 
+        $host = get_option(self::GRAPHJS_HOST);
+        if ($host === false) {
+            add_option(self::GRAPHJS_HOST, "");
+        }
+
         $overrideComment = get_option(self::GRAPHJS_OVERRIDE_COMMENT);
         if ($overrideComment === false) {
             add_option(self::GRAPHJS_OVERRIDE_COMMENT, self::GRAPHJS_DEFAULT_OVERRIDE_COMMENT);
@@ -87,6 +93,7 @@ class WordpressPlugin
         delete_option(self::GRAPHJS_UUID);
         delete_option(self::GRAPHJS_THEME);
         delete_option(self::GRAPHJS_COLOR);
+        delete_option(self::GRAPHJS_HOST);
         delete_option(self::GRAPHJS_OVERRIDE_COMMENT);
     }
 
@@ -116,6 +123,28 @@ class WordpressPlugin
 
     public function my_custom_admin_head()
     {
+        $uuid = get_option(self::GRAPHJS_UUID);
+
+        if (! $uuid) {
+            echo '<!-- GraphJS could not be initialized. Please provide UUID. -->';
+            return;
+        }
+
+        $color = get_option(self::GRAPHJS_COLOR);
+        $theme = get_option(self::GRAPHJS_THEME);
+        $host = get_option(self::GRAPHJS_HOST);
+
+        $options = [];
+        if ($color) {
+            $options['color'] = $color;
+        }
+        if ($theme) {
+            $options['theme'] = $theme;
+        }
+        if ($host) {
+            $options['host'] = $host;
+        }
+
         $path = $this->pluginDirectory . '/view/init.php';
         include $path;
     }
@@ -182,6 +211,7 @@ class WordpressPlugin
         register_setting('graphjs_options', self::GRAPHJS_UUID, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_THEME, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_COLOR, 'strval');
+        register_setting('graphjs_options', self::GRAPHJS_HOST, 'strval');
         register_setting('graphjs_options', self::GRAPHJS_OVERRIDE_COMMENT, 'boolval');
     }
 }
