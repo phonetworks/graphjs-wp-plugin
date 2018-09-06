@@ -1,9 +1,6 @@
 <script src="https://graphjs.com/graph.js"></script>
 <script>
 
-GraphJS.init("<?= esc_attr(get_option(\Graphjs\WordpressPlugin::GRAPHJS_UUID)) ?>", {
-    theme: "<?= esc_attr(get_option(\Graphjs\WordpressPlugin::GRAPHJS_THEME)) ?>",
-    color: "<?= esc_attr(get_option(\Graphjs\WordpressPlugin::GRAPHJS_COLOR)) ?>",
-});
+GraphJS.init(<?= wp_json_encode($uuid) ?>, <?= wp_json_encode($options) ?>);
 
 </script>
