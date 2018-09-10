@@ -259,6 +259,8 @@ class WordpressPlugin
 
             $this->addActionLinks();
             $this->registerSettings();
+
+            wp_enqueue_style('graphjs-admin-common-css', plugins_url('css/admin_common.css', $this->pluginFile));
         });
 
         add_action('admin_menu', function () {
@@ -379,13 +381,62 @@ HTML;
             include $path;
         };
 
-        add_submenu_page('graphjs', 'Tutorial', 'Tutorial',
+        $graphjs_pages_wizard_page = function () {
+            $pages = [
+                'forum' => [
+                    'title' => 'Forum',
+                    'description' => 'The forum area can be used as a place to provide support to your customers/members. Or a place to ignite conversations around hot topics, and increase engagement on your website.',
+                ],
+                'contact' => [
+                    'title' => 'Contact',
+                    'description' => 'With a Contact Us page, you can let your members email you directly from your website. This is almost a must for all websites/blogs.'
+                ],
+                'messages' => [
+                    'title' => 'Messages',
+                    'description' => null,
+                ],
+                'my_profile' => [
+                    'title' => 'My Profile',
+                    'description' => null,
+                ],
+                'members' => [
+                    'title' => 'Members',
+                    'description' => null,
+                ],
+                'groups' => [
+                    'title' => 'Groups',
+                    'description' => null,
+                ],
+            ];
+            foreach ($pages as $key => &$value) {
+                $value['meta_key'] = "graphjs_page_{$key}";
+                $args = [
+                    'post_type' => 'page',
+                    'posts_per_page' => 1,
+                    'meta_key' => $value['meta_key'],
+                    'meta_value' => true,
+                ];
+                $page = get_posts($args);
+                $value['page_id'] = empty($page) ? null : current($page)->ID;
+            }
+            extract([
+                'pages' => $pages,
+            ]);
+            $path = $this->pluginDirectory . '/view/pages_wizard.php';
+            include $path;
+        };
+
+        add_submenu_page('graphjs', 'GraphJS Tutorial', 'Tutorial',
             'administrator', 'graphjs',
             $graphjs_main_menu_page);
 
         add_submenu_page('graphjs', 'GraphJS Settings', 'Settings',
             'administrator', 'graphjs-settings',
             $graphjs_settings_menu_page);
+
+        add_submenu_page('graphjs', 'GraphJS Pages Wizard', 'Pages',
+            'administrator', 'graphjs-pages-wizard',
+            $graphjs_pages_wizard_page);
     }
 
     public function addActionLinks()
