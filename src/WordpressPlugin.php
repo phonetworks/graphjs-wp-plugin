@@ -382,42 +382,10 @@ HTML;
         };
 
         $graphjs_pages_wizard_page = function () {
-            $pages = [
-                'forum' => [
-                    'title' => 'Forum',
-                    'description' => 'The forum area can be used as a place to provide support to your customers/members. Or a place to ignite conversations around hot topics, and increase engagement on your website.',
-                ],
-                'contact' => [
-                    'title' => 'Contact',
-                    'description' => 'With a Contact Us page, you can let your members email you directly from your website. This is almost a must for all websites/blogs.'
-                ],
-                'messages' => [
-                    'title' => 'Messages',
-                    'description' => null,
-                ],
-                'my_profile' => [
-                    'title' => 'My Profile',
-                    'description' => null,
-                ],
-                'members' => [
-                    'title' => 'Members',
-                    'description' => null,
-                ],
-                'groups' => [
-                    'title' => 'Groups',
-                    'description' => null,
-                ],
-            ];
+            $pages = $this->getPages();
             foreach ($pages as $key => &$value) {
-                $value['meta_key'] = "graphjs_page_{$key}";
-                $args = [
-                    'post_type' => 'page',
-                    'posts_per_page' => 1,
-                    'meta_key' => $value['meta_key'],
-                    'meta_value' => true,
-                ];
-                $page = get_posts($args);
-                $value['page_id'] = empty($page) ? null : current($page)->ID;
+                $page = $this->getPageByMeta($value['meta_key']);
+                $value['page_id'] = $page ? $page->ID : null;
             }
             extract([
                 'pages' => $pages,
@@ -437,6 +405,93 @@ HTML;
         add_submenu_page('graphjs', 'GraphJS Pages Wizard', 'Pages',
             'administrator', 'graphjs-pages-wizard',
             $graphjs_pages_wizard_page);
+
+        add_action('load-graphjs_page_graphjs-pages-wizard', [ $this, 'handlePageWizardSubmit' ]);
+    }
+
+    public function getPageByMeta($metaKey)
+    {
+        $args = [
+            'post_type' => 'page',
+            'posts_per_page' => 1,
+            'meta_key' => $metaKey,
+            'meta_value' => '1',
+        ];
+        $page = get_posts($args);
+
+        return empty($page) ? null : current($page);
+    }
+
+    public function getPages()
+    {
+        $pages = [
+            'forum' => [
+                'title' => 'Forum',
+                'description' => 'The forum area can be used as a place to provide support to your customers/members. Or a place to ignite conversations around hot topics, and increase engagement on your website.',
+                'content' => '<graphjs-forum></graphjs-forum>',
+            ],
+            'contact' => [
+                'title' => 'Contact',
+                'description' => 'With a Contact Us page, you can let your members email you directly from your website. This is almost a must for all websites/blogs.',
+                'content' => '',
+            ],
+            'messages' => [
+                'title' => 'Messages',
+                'description' => null,
+                'content' => '<graphjs-messages></graphjs-messages>',
+            ],
+            'my_profile' => [
+                'title' => 'My Profile',
+                'description' => null,
+                'content' => '<graphjs-profile></graphjs-profile>',
+            ],
+            'members' => [
+                'title' => 'Members',
+                'description' => null,
+                'content' => '',
+            ],
+            'groups' => [
+                'title' => 'Groups',
+                'description' => null,
+                'content' => '<graphjs-group></graphjs-group>',
+            ],
+        ];
+
+        foreach($pages as $key => $page) {
+            $pages[$key]['meta_key'] = "graphjs_page_{$key}";
+        };
+
+        return $pages;
+    }
+
+    public function handlePageWizardSubmit()
+    {
+        if (! $_POST) {
+            return;
+        }
+
+        $pages = $this->getPages();
+
+        foreach ($pages as $key => $page) {
+            $post = $this->getPageByMeta($page['meta_key']);
+            $formValue = $_POST[$page['meta_key']] ?? null;
+
+            // Remove if post exist and unchecked in form
+            if ($post !== null && $formValue === null) {
+                wp_delete_post($post->ID);
+            }
+
+            // Create if post does not exist and checked in form
+            if ($post === null && $formValue !== null) {
+                $postId = wp_insert_post([
+                    'post_type' => 'page',
+                    'post_content' => $page['content'],
+                    'post_title' => $page['title'],
+                    'post_status' => 'publish',
+                ]);
+                update_post_meta($postId, $page['meta_key'], true);
+            }
+        }
     }
 
     public function addActionLinks()
