@@ -21,6 +21,7 @@ class WordpressPlugin
     private $pluginFile;
     private $pluginDirectory;
     private $graphjs;
+    private $postData;
 
     /**
      * @param string $pluginFile
@@ -53,6 +54,9 @@ class WordpressPlugin
         $this->registerShortcodes();
         $this->registerActions();
         $this->registerFilters();
+
+        // store original POST data before being modified
+        $this->postData = $_POST;
     }
 
     public function initMetabox()
@@ -308,7 +312,7 @@ HTML;
 
     public function loadPrivateContentAjax()
     {
-        $content = $_POST['contents'];
+        $content = $this->postData['contents'];
         $content = apply_filters('the_content', $content);
         echo $content;
         wp_die();
