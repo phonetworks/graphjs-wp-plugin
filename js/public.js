@@ -24,6 +24,9 @@
     });
 
     $(function () {
+        var GraphJS = window.GraphJS;
+        var GraphJSConfig = window.GraphJSConfig;
+
         GraphJS.getSession(function (json) {
             var isLoggedIn = (json.success === true);
             $('[data-graphjs-private-content]').each(function (index, element) {
@@ -51,6 +54,7 @@
                     };
                     $.post(ADMIN_AJAX_URL, payload, function (response) {
                         $(element).html(response);
+                        GraphJS.init(GraphJSConfig.id);
                     });
                 });
             });
