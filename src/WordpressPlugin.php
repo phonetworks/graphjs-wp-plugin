@@ -428,32 +428,32 @@ HTML;
             'forum' => [
                 'title' => 'Forum',
                 'description' => 'The forum area can be used as a place to provide support to your customers/members. Or a place to ignite conversations around hot topics, and increase engagement on your website.',
-                'content' => '<graphjs-forum></graphjs-forum>',
+                'content' => '[graphjs-forum]',
             ],
             'contact' => [
                 'title' => 'Contact',
                 'description' => 'With a Contact Us page, you can let your members email you directly from your website. This is almost a must for all websites/blogs.',
-                'content' => '',
+                'content' => '[graphjs-messages-composer anonymity="on"]',
             ],
             'messages' => [
                 'title' => 'Messages',
                 'description' => null,
-                'content' => '<graphjs-messages></graphjs-messages>',
+                'content' => '[graphjs-messages]',
             ],
             'my_profile' => [
                 'title' => 'My Profile',
                 'description' => null,
-                'content' => '<graphjs-profile></graphjs-profile>',
+                'content' => '[graphjs-profile]',
             ],
             'members' => [
                 'title' => 'Members',
                 'description' => null,
-                'content' => '',
+                'content' => '[graphjs-profile-list]',
             ],
             'groups' => [
                 'title' => 'Groups',
                 'description' => null,
-                'content' => '<graphjs-group></graphjs-group>',
+                'content' => '[graphjs-group]',
             ],
         ];
 
