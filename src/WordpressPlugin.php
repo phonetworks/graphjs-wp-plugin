@@ -135,6 +135,15 @@ class WordpressPlugin
         $host = get_option(self::GRAPHJS_HOST);
 
         $options = [];
+        $options['host'] = sprintf(
+            "https://gj%s.herokuapp.com",
+            strtolower(
+                substr(
+                    str_replace("-","", esc_attr($uuid)),
+                    4
+                )
+            )
+        );
         if ($color) {
             $options['color'] = $color;
         }
