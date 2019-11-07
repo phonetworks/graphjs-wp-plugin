@@ -58,6 +58,28 @@
                     Override default comment with GraphJS Comment using <code>&lt;graphjs-comments&gt;</code>
                 </td>
             </tr>
+
+            <tr>
+                <th scope="row">Connect with GraphJS</th>
+                <td>
+                    <div id="wrapper_graphjs_current_user" style="<?= $graphjsUsername ? '' : 'display:none' ?>">
+                        <div>
+                            Connected as <strong id="label_graphjs_username"><?= $graphjsUsername ?></strong>
+                        </div>
+                        <div>
+                            <button type="button" id="btn_graphjs_change_login" class="button">Change</button>
+                        </div>
+                    </div>
+                    <div id="wrapper_graphjs_login" style="<?= ! $graphjsUsername ? '' : 'display:none' ?>">
+                        <graphjs-auth-login></graphjs-auth-login>
+                    </div>
+                    <div>
+                        <input type="hidden" id="graphjs_login_status" name="graphjs_login_status">
+                        <input type="hidden" id="txt_graphjs_username" name="graphjs_username">
+                        <input type="hidden" id="txt_graphjs_password" name="graphjs_password">
+                    </div>
+                </td>
+            </tr>
         </table>
 
         <?php submit_button(); ?>
